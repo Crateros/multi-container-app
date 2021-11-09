@@ -37,6 +37,8 @@ export const FibCalc = () => {
         try {
             await axios.post('/api/values', { index: currentIndex });
             setCurrentIndex('');
+            fetchCurrentValues();
+            fetchSeenIndexes();
         } catch (error) {
             console.log(error);
         };
