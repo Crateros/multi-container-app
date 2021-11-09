@@ -1,0 +1,57 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+  redis:
+    image: redis:latest
+  nginx:
+    image: nginx:latest
+    restart: always
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:80"
+  client:
+    build:
+      context: ./fib-client
+      dockerfile: Dockerfile.dev
+    volumes:
+      - /app/node_modules
+      - ./fib-client:/app
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      # Ignore node_modules
+      - /app/node_modules
+      # Mount the server's code to watch changes
+      - ./server:/app
+    environment:
+      # Redis environment variables
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379 # Redis exposes port 6379 by default
+      # Postgres environment variables
+      - PGUSER=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PGPASSWORD=postgres
+      - PGPORT=5432
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile.dev
+    volumes:
+      - /app/node_modules
+      - ./worker:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379 # Redis exposes port 6379 by default
